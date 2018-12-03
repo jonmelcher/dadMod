@@ -5,20 +5,27 @@ function Bonzi(clippy) {
 
 Bonzi.responses = {
     enabled: [
-        "enabled"
+        "Kid tested.  Dad approved.",
+        "Praise the lord, and pass the ammunition!",
+        "That's what Bira would say.",
+        "Look at Mr. Clean over here!",
     ],
 
     disabled: [
-        "disabled"
+        "Are you sure you want to show Dad that?",
+        "Dad says: \"Noooo way.\"",
+        "Is your name Vince?",
+        "Real knowledge is to know the extent of one’s ignorance.",
+        "Would you say that in front of your Mother?",
     ],
 
     down: [
-        "down"
+        "Dad left for cigarettes 20 years ago.",
     ],
 };
 
 Bonzi.prototype.load = function() {
-    this.clippy.load('Bonzi', (agent) => {
+    this.clippy.load('Genius', (agent) => {
         this.instance = agent;
         this.instance.show();
     });

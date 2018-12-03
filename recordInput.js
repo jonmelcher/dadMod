@@ -13,18 +13,18 @@ function RecordInput(mithril, bonzi, recordList) {
     this.mithril = mithril;
     this.bonzi = bonzi;
     this.recordList = recordList;
-    this.currentInput = '';
     this.models = TRAINING_DATA.map((datum) => datum.model);
     this.aliases = TRAINING_DATA.map((datum) => datum.alias);
+    this.currentInput = '';
     this.currentModel = this.models[2];
     this.typingTid = 0;
 }
 
-RecordInput.prototype.makePredictionRequest = function(content, model_id) {
+RecordInput.prototype.makePredictionRequest = function() {
     return this.mithril.request({
         method: 'POST',
         url: PREDICTION_REQUEST_URL,
-        data: { content, model_id },
+        data: { content: this.currentInput, model_id: this.currentModel },
         withCredentials: false,
     });
 };
@@ -38,8 +38,26 @@ RecordInput.prototype.view = function() {
             class: 'record-select',
             title: 'Choose a dadMODel...',
             onchange: (evt) => {
+                clearTimeout(this.typingTid);
                 const model = evt.target.value.trim();
-                RecordInput.model = model;
+                this.currentModel = model;
+                if (this.currentInput) {
+                    this.typingTid = setTimeout(() => {
+                        clearTimeout(this.typingTid);
+                        return this
+                            .makePredictionRequest()
+                            .then((data) => {
+                                if (data.status === 'enabled') {
+                                    this.bonzi.randomPositiveResponse();
+                                } else {
+                                    this.bonzi.randomNegativeResponse();
+                                }
+                            })
+                            .catch(() => {
+                                this.bonzi.randomDownResponse();
+                            });                            
+                    }, 500);
+                }
             }
         },
 
@@ -61,7 +79,7 @@ RecordInput.prototype.view = function() {
 
             const textArea = evt.target;
             const content = textArea.value.trim();
-            const model_id = this.currentModel;
+            this.currentInput = content;
 
             if (evt.which === 13) {
                 return this.onEnter(evt);
@@ -69,19 +87,21 @@ RecordInput.prototype.view = function() {
 
             this.typingTid = setTimeout(() => {
                 clearTimeout(this.typingTid);
-                return this
-                    .makePredictionRequest(content, model_id)
-                    .then((data) => {
-                        if (data.status === 'enabled') {
-                            this.bonzi.randomPositiveResponse();
-                        } else {
-                            this.bonzi.randomNegativeResponse();
-                        }
-                    })
-                    .catch(() => {
-                        this.bonzi.randomDownResponse();
-                    });                            
-            }, 2500);
+                if (this.currentInput) {
+                    return this
+                        .makePredictionRequest()
+                        .then((data) => {
+                            if (data.status === 'enabled') {
+                                this.bonzi.randomPositiveResponse();
+                            } else {
+                                this.bonzi.randomNegativeResponse();
+                            }
+                        })
+                        .catch(() => {
+                            this.bonzi.randomDownResponse();
+                        });
+                }
+            }, 1000);
         }
     });
 
@@ -91,18 +111,21 @@ RecordInput.prototype.view = function() {
 RecordInput.prototype.onEnter = function(evt) {
     const textArea = evt.target;
     const content = textArea.value.trim();
+    this.currentInput = content;
     const model_id = this.currentModel;
+    
     textArea.disabled = true;
     this
-        .makePredictionRequest(content, model_id)
+        .makePredictionRequest()
         .then((data) => {
             const alias = this.aliases[this.models.indexOf(model_id)];
-            const record = `Input '${content}' was ${data.status} with ${data.probability} precision for ${alias} (${model_id})`;
-            this.recordList.records.push(record);
+            const text = `Input '${content}' was ${data.status} with ${data.probability} precision for ${alias} (${model_id})`;
+            const clazz = data.status;
+            this.recordList.records.push({ text, class: clazz });
         })
         .catch(() => {
-            const record = `Input ${content} failed to be dadMODded (we're so sorry!)`;
-            this.recordList.records.push(record);
+            const text = `Input ${content} failed to be dadMODded (we're so sorry!)`;
+            this.recordList.records.push({ text, class: 'disabled' });
         })
         .then(() => {
             textArea.value = "";

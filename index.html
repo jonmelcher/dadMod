@@ -21,6 +21,10 @@
 				font-size: 2em;
 			}
 
+			.clippy-content {
+				font-size: 1em;
+			}
+
 			@keyframes AnimationName { 
 				0%{background-position:0% 50%}
 				50%{background-position:100% 50%}
@@ -43,11 +47,20 @@
 				width: 100%;
 				height: 200px;
 				resize: none;
+				font-size: 1em;
 			}
 
 			.dadMOD .record-list {
 				list-style: none;
 				padding: 0;
+			}
+
+			.dadMOD .record-list-item.enabled {
+				color: green;
+			}
+
+			.dadMOD .record-list-item.disabled {
+				color: red;
 			}
 		</style>
 	</head>
@@ -67,6 +80,8 @@
 
 			RECORD_LIST.mount(document.getElementById('record-list-mount'));
 			RECORD_INPUT.mount(document.getElementById('record-input-mount'));
+
+			window.lol = BONZI;
 
 		</script>
 	</body>

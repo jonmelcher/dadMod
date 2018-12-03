@@ -17,8 +17,8 @@ RecordList.prototype.view = function() {
             .records
             .map((record) => this.mithril(
                 INNER_MARKUP,
-                { class: INNER_CLASS },
-                record
+                { class: INNER_CLASS + ' ' + record.class },
+                record.text
             ))
     ); 
 };
