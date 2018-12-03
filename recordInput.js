@@ -9,13 +9,15 @@ const TRAINING_DATA = [
 const PREDICTION_REQUEST_URL = 'http://192.168.68.86:5000/predict';
 
 
-function RecordInput(mithril, recordList) {
+function RecordInput(mithril, bonzi, recordList) {
     this.mithril = mithril;
+    this.bonzi = bonzi;
     this.recordList = recordList;
     this.currentInput = '';
     this.models = TRAINING_DATA.map((datum) => datum.model);
     this.aliases = TRAINING_DATA.map((datum) => datum.alias);
     this.currentModel = this.models[2];
+    this.lastPresubmit = Date.now();
 }
 
 RecordInput.prototype.makePredictionRequest = function(content, model_id) {
@@ -57,7 +59,28 @@ RecordInput.prototype.view = function() {
             if (evt.which === 13) {
                 return this.onEnter(evt);
             }
-            return this.onPreSubmission(evt);
+
+            const prev = this.lastPresubmit;
+            const now = Date.now();
+            this.lastPresubmit = now;
+
+            if (now - prev > 2500) {
+                const textArea = evt.target;
+                const content = textArea.value.trim();
+                const model_id = this.currentModel;
+                return this
+                    .makePredictionRequest(content, model_id)
+                    .then((data) => {
+                        if (data.status === 'enabled') {
+                            this.bonzi.randomPositiveResponse();
+                        } else {
+                            this.bonzi.randomNegativeResponse();
+                        }
+                    })
+                    .catch(() => {
+                        this.bonzi.randomDownResponse();
+                    });
+            }
         }
     });
 

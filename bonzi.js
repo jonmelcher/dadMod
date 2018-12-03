@@ -18,9 +18,9 @@ Bonzi.responses = {
 };
 
 Bonzi.prototype.load = function() {
-    this.clippy.load('Bonzi', function(agent) {
-        Bonzi.instance = agent;
-        Bonzi.instance.show();
+    this.clippy.load('Bonzi', (agent) => {
+        this.instance = agent;
+        this.instance.show();
     });
 };
 

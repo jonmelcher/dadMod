@@ -63,7 +63,7 @@
 			BONZI.load();
 
 			const RECORD_LIST = new RecordList(window.m);
-			const RECORD_INPUT = new RecordInput(window.m, RECORD_LIST);
+			const RECORD_INPUT = new RecordInput(window.m, BONZI, RECORD_LIST);
 
 			RECORD_LIST.mount(document.getElementById('record-list-mount'));
 			RECORD_INPUT.mount(document.getElementById('record-input-mount'));
