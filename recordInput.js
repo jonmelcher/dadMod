@@ -17,7 +17,7 @@ function RecordInput(mithril, bonzi, recordList) {
     this.models = TRAINING_DATA.map((datum) => datum.model);
     this.aliases = TRAINING_DATA.map((datum) => datum.alias);
     this.currentModel = this.models[2];
-    this.lastPresubmit = Date.now();
+    this.typingTid = 0;
 }
 
 RecordInput.prototype.makePredictionRequest = function(content, model_id) {
@@ -56,18 +56,19 @@ RecordInput.prototype.view = function() {
         class: 'record-input',
         title: 'Type in something to be dadMODded and press enter...',
         onkeyup: (evt) => {
+
+            clearTimeout(this.typingTid);
+
+            const textArea = evt.target;
+            const content = textArea.value.trim();
+            const model_id = this.currentModel;
+
             if (evt.which === 13) {
                 return this.onEnter(evt);
             }
 
-            const prev = this.lastPresubmit;
-            const now = Date.now();
-            this.lastPresubmit = now;
-
-            if (now - prev > 2500) {
-                const textArea = evt.target;
-                const content = textArea.value.trim();
-                const model_id = this.currentModel;
+            this.typingTid = setTimeout(() => {
+                clearTimeout(this.typingTid);
                 return this
                     .makePredictionRequest(content, model_id)
                     .then((data) => {
@@ -79,8 +80,8 @@ RecordInput.prototype.view = function() {
                     })
                     .catch(() => {
                         this.bonzi.randomDownResponse();
-                    });
-            }
+                    });                            
+            }, 2500);
         }
     });
 
