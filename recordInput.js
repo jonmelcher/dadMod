@@ -1,4 +1,4 @@
-const TRAINING_DATA = [
+const PREDICTIVE_MODEL_OPTIONS = [
     { model: 'h1', alias: 'Everything (english)' },
     { model: 'h2', alias: 'Advance before VF' },
     { model: 'h3', alias: 'Al.com after august 2018' },
@@ -7,14 +7,18 @@ const TRAINING_DATA = [
 ];
 
 const PREDICTION_REQUEST_URL = 'http://192.168.68.86:5000/predict';
+const TYPING_TIMEOUT_MS = 500;
+const ENABLED = 'enabled';
+const DISABLED = 'disabled';
+const ENTER = 13;
 
 
 function RecordInput(mithril, bonzi, recordList) {
     this.mithril = mithril;
     this.bonzi = bonzi;
     this.recordList = recordList;
-    this.models = TRAINING_DATA.map((datum) => datum.model);
-    this.aliases = TRAINING_DATA.map((datum) => datum.alias);
+    this.models = PREDICTIVE_MODEL_OPTIONS.map((datum) => datum.model);
+    this.aliases = PREDICTIVE_MODEL_OPTIONS.map((datum) => datum.alias);
     this.currentInput = '';
     this.currentModel = this.models[2];
     this.typingTid = 0;
@@ -29,7 +33,29 @@ RecordInput.prototype.makePredictionRequest = function() {
     });
 };
 
+RecordInput.prototype.typingTask = function() {
+    clearTimeout(this.typingTid);
+    if (this.currentInput) {
+        this.typingTid = setTimeout(() => {
+            clearTimeout(this.typingTid);
+            return this
+                .makePredictionRequest()
+                .then((data) => {
+                    if (data.status === ENABLED) {
+                        this.bonzi.randomPositiveResponse();
+                    } else {
+                        this.bonzi.randomNegativeResponse();
+                    }
+                })
+                .catch(() => {
+                    this.bonzi.randomDownResponse();
+                });                            
+        }, TYPING_TIMEOUT_MS);
+    }
+};
+
 RecordInput.prototype.view = function() {
+    
     const span = this.mithril('span', 'Choose a model...');
 
     const select = this.mithril(
@@ -38,26 +64,8 @@ RecordInput.prototype.view = function() {
             class: 'record-select',
             title: 'Choose a dadMODel...',
             onchange: (evt) => {
-                clearTimeout(this.typingTid);
-                const model = evt.target.value.trim();
-                this.currentModel = model;
-                if (this.currentInput) {
-                    this.typingTid = setTimeout(() => {
-                        clearTimeout(this.typingTid);
-                        return this
-                            .makePredictionRequest()
-                            .then((data) => {
-                                if (data.status === 'enabled') {
-                                    this.bonzi.randomPositiveResponse();
-                                } else {
-                                    this.bonzi.randomNegativeResponse();
-                                }
-                            })
-                            .catch(() => {
-                                this.bonzi.randomDownResponse();
-                            });                            
-                    }, 500);
-                }
+                this.currentModel = evt.target.value.trim();
+                this.typingTask();
             }
         },
 
@@ -71,37 +79,19 @@ RecordInput.prototype.view = function() {
     );
 
     const textArea = this.mithril('textarea', {
+
         class: 'record-input',
+
         title: 'Type in something to be dadMODded and press enter...',
+
         onkeyup: (evt) => {
-
-            clearTimeout(this.typingTid);
-
-            const textArea = evt.target;
-            const content = textArea.value.trim();
-            this.currentInput = content;
-
-            if (evt.which === 13) {
+            this.currentInput = evt.target.value.trim();
+            if (evt.which === ENTER) {
+                // we are submitting already, avoid double calling the api
+                clearInterval(this.typingTid);
                 return this.onEnter(evt);
             }
-
-            this.typingTid = setTimeout(() => {
-                clearTimeout(this.typingTid);
-                if (this.currentInput) {
-                    return this
-                        .makePredictionRequest()
-                        .then((data) => {
-                            if (data.status === 'enabled') {
-                                this.bonzi.randomPositiveResponse();
-                            } else {
-                                this.bonzi.randomNegativeResponse();
-                            }
-                        })
-                        .catch(() => {
-                            this.bonzi.randomDownResponse();
-                        });
-                }
-            }, 1000);
+            this.typingTask();
         }
     });
 
@@ -110,24 +100,26 @@ RecordInput.prototype.view = function() {
 
 RecordInput.prototype.onEnter = function(evt) {
     const textArea = evt.target;
-    const content = textArea.value.trim();
-    this.currentInput = content;
-    const model_id = this.currentModel;
-    
+
+    // prevent further input while submitting
     textArea.disabled = true;
+
+    this.currentInput = textArea.value.trim();
+
     this
         .makePredictionRequest()
         .then((data) => {
-            const alias = this.aliases[this.models.indexOf(model_id)];
-            const text = `Input '${content}' was ${data.status} with ${data.probability} precision for ${alias} (${model_id})`;
+            const alias = this.aliases[this.models.indexOf(this.currentModel)];
+            const text = `Input '${this.currentInput}' was ${data.status} with ${data.probability} precision for ${alias} (${this.currentModel})`;
             const clazz = data.status;
             this.recordList.records.push({ text, class: clazz });
         })
         .catch(() => {
-            const text = `Input ${content} failed to be dadMODded (we're so sorry!)`;
-            this.recordList.records.push({ text, class: 'disabled' });
+            const text = `Input ${this.currentInput} failed to be dadMODded (we're so sorry!)`;
+            this.recordList.records.push({ text, class: DISABLED });
         })
         .then(() => {
+            // reset textarea and allow more input
             textArea.value = "";
             textArea.disabled = false;
         });

@@ -1,16 +1,25 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
+		<!-- third-party dependencies -->
 		<script src="https://unpkg.com/mithril/mithril.js"></script>
 		<script src="https://unpkg.com/jquery@3.2.1"></script>
 		<script src="https://unpkg.com/clippyjs@latest"></script>
-		<link rel="stylesheet" type="text/css" href="https://gitcdn.xyz/repo/pi0/clippyjs/master/assets/clippy.css">
 
+		<!-- first-party dependencies -->
 		<script src="./bonzi.js"></script>
 		<script src="./recordList.js"></script>
 		<script src="./recordInput.js"></script>
 
+		<!-- third-party css -->
+		<link rel="stylesheet" type="text/css" href="https://gitcdn.xyz/repo/pi0/clippyjs/master/assets/clippy.css">
+
+		<!-- first-party css -->
 		<style>
+
+			.clippy-content {
+				font-size: 1em;
+			}
 
 			body {
 				background: linear-gradient(270deg, #671e89, #20bbb6);
@@ -21,14 +30,10 @@
 				font-size: 2em;
 			}
 
-			.clippy-content {
-				font-size: 1em;
-			}
-
 			@keyframes AnimationName { 
-				0%{background-position:0% 50%}
-				50%{background-position:100% 50%}
-				100%{background-position:0% 50%}
+				0% { background-position: 0% 50% }
+				50% { background-position: 100% 50% }
+				100% { background-position: 0% 50% }
 			}
 
 			.dadMOD {
@@ -62,6 +67,7 @@
 			.dadMOD .record-list-item.disabled {
 				color: red;
 			}
+
 		</style>
 	</head>
 	<body>
@@ -80,8 +86,6 @@
 
 			RECORD_LIST.mount(document.getElementById('record-list-mount'));
 			RECORD_INPUT.mount(document.getElementById('record-input-mount'));
-
-			window.lol = BONZI;
 
 		</script>
 	</body>
